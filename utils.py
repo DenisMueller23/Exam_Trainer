@@ -48,6 +48,31 @@ def push_to_pinecone(pinecone_apikey, pinecone_environment, pinecone_index_name,
 def pull_from_pinecone(pinecone_apikey, pinecone_environment, pinecone_index_name, embeddings):
     print("15 seconds delay...")
     time.sleep(20)
-    
+    pinecone.init(
+    api_key=pinecone_apikey,
+    environment=pinecone_environment
+    )
 
-# 
+    index_name = pinecone_index_name
+    index=Pinecone.from_existing_index(index_name, embeddings)
+    return index
+# Creates a fucntion that prefers certain documents over
+# other depending on inserted keywords
+
+def similar_topics(query, k, pinecone_apikey, pinecone_environment, 
+                   pinecone_index_name, embeddings, unique_id):
+    pinecone.init(
+        api_key=pinecone_apikey,
+        environment=pinecone_environment
+    )
+    index_name=pinecone_index_name
+    index=pull_from_pinecone(pinecone_apikey, pinecone_environment, index_name, embeddings)
+    similar_docs = index.similarity_search_with_score(query, int(k), {"unique_id": unique_id})
+    return similar_docs
+
+# Make a summary of certain documents
+def get_summary(current_doc):
+    llm=OpenAI(temperature=0) # 0 equals no variation, 1 highest randomness
+    chain = load_summarize_chain(llm, chain_type="map_reduce")
+    summary = chain.run([current_doc])
+    return summary
